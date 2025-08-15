@@ -17,17 +17,13 @@ public class EmpresaController {
 
     private final EmpresaService empresaService;
 
-    /**
-     * Retorna os dados da empresa do admin logado.
-     */
+    /** Retorna os dados da empresa do admin logado. */
     @GetMapping
     public ResponseEntity<EmpresaDTO> minhaEmpresa() {
         return ResponseEntity.ok(empresaService.buscarMinhaEmpresa());
     }
 
-    /**
-     * Atualiza os dados da empresa do admin logado.
-     */
+    /** Atualiza os dados da empresa do admin logado. */
     @PutMapping
     public ResponseEntity<EmpresaDTO> atualizarMinhaEmpresa(@RequestBody EmpresaDTO dto) {
         return ResponseEntity.ok(empresaService.atualizarMinhaEmpresa(dto));

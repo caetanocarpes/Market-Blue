@@ -1,3 +1,4 @@
+--> Caso eu queira usar mais tarde:
 CREATE TABLE categorias (
     id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL UNIQUE,

@@ -1,8 +1,8 @@
-package com.blue.api.service.impl;
+package com.blue.service;
 
-import com.blue.api.dto.DashboardMetricsDTO;
-import com.blue.api.dto.VendaResumoDTO;
-import com.blue.api.service.AdminDashboardService;
+import com.blue.dto.DashboardMetricsDTO;
+import com.blue.dto.VendaResumoDTO;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,10 +13,11 @@ import java.util.*;
 
 /**
  * Implementação MOCK: gera dados aleatórios coerentes com supermercados.
- * Troque por uma implementação real quando ligar no repositório.
+ * Ative com o profile "mock-dashboard" e ajuste o controller para usar esta classe se quiser.
  */
 @Service
-public class AdminDashboardServiceMock implements AdminDashboardService {
+@Profile("mock-dashboard")
+public class AdminDashboardServiceMock {
 
     private static final List<String> NOMES = List.of(
             "Ana", "Bruno", "Carla", "Diego", "Edu", "Fernanda", "Gabi", "Hugo", "Igor", "Julia",
@@ -37,9 +38,8 @@ public class AdminDashboardServiceMock implements AdminDashboardService {
 
     private final Random r = new Random();
 
-    @Override
-    public DashboardMetricsDTO buscarMetricasDoDia() {
-        // Números base (mock)
+    /** Mesmas assinaturas do service "real" pra facilitar troca. */
+    public DashboardMetricsDTO obterKpis(LocalDate de, LocalDate ate) {
         int usuariosAtivos = rnd(120, 420);
         int pedidos24h = rnd(40, 180);
         BigDecimal faturamento = money(r.nextDouble() * 45000 + 5000);
@@ -52,7 +52,7 @@ public class AdminDashboardServiceMock implements AdminDashboardService {
         deltas.setFaturamento(rndPct(0.0, 12.0));
         deltas.setTicketMedio(rndPct(0.0, 8.0));
 
-        // Série de 14 dias pra desenhar no “gráfico”
+        // Série de 14 dias para o gráfico
         List<DashboardMetricsDTO.PontoSerie> serie = new ArrayList<>();
         LocalDate hoje = LocalDate.now();
         for (int i = 13; i >= 0; i--) {
@@ -71,14 +71,13 @@ public class AdminDashboardServiceMock implements AdminDashboardService {
         return dto;
     }
 
-    @Override
-    public List<VendaResumoDTO> listarUltimasVendas() {
-        int quantidade = rnd(6, 12); // 6 a 12 linhas
+    public List<VendaResumoDTO> ultimasVendas(int limit) {
+        int quantidade = Math.min(limit, rnd(6, 12));
         List<VendaResumoDTO> lista = new ArrayList<>(quantidade);
         for (int i = 0; i < quantidade; i++) {
             String cliente = pick(NOMES);
             String produto = pick(PRODUTOS_MERCADO);
-            BigDecimal valor = money(2 + r.nextDouble() * 80); // R$ 2 ~ R$ 82
+            BigDecimal valor = money(2 + r.nextDouble() * 80); // R$2 ~ R$82
             LocalDateTime data = LocalDateTime.now().minusMinutes(rnd(5, 60 * 60));
 
             lista.add(new VendaResumoDTO((long) (1000 + i), cliente, produto, valor, data));
@@ -90,8 +89,8 @@ public class AdminDashboardServiceMock implements AdminDashboardService {
 
     /* ===== Helpers ===== */
     private int rnd(int min, int max) { return r.nextInt((max - min) + 1) + min; }
-    private double rndPct(double min, double max) { return round2(min + r.nextDouble() * (max - min)); }
-    private double round2(double v) { return Math.round(v * 10.0) / 10.0; }
+    private double rndPct(double min, double max) { return round1(min + r.nextDouble() * (max - min)); }
+    private double round1(double v) { return Math.round(v * 10.0) / 10.0; }
     private <T> T pick(List<T> list) { return list.get(r.nextInt(list.size())); }
     private BigDecimal money(double v) { return BigDecimal.valueOf(v).setScale(2, RoundingMode.HALF_UP); }
 }

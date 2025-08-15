@@ -3,10 +3,11 @@ package com.blue.service;
 import com.blue.domain.Empresa;
 import com.blue.dto.EmpresaDTO;
 import com.blue.repository.EmpresaRepository;
-import com.blue.security.UsuarioAutenticadoUtil;
+import com.blue.security.JwtTenant;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,12 +20,10 @@ import java.util.stream.Collectors;
 public class EmpresaService {
 
     private final EmpresaRepository empresaRepository;
-    private final UsuarioAutenticadoUtil usuarioAutenticadoUtil; // Utilitário para pegar dados do usuário logado
+    private final JwtTenant tenant;
 
-    /**
-     * Lista todas as empresas (apenas se for necessário em contexto admin global).
-     * Se quiser restringir, pode filtrar pelo usuário logado.
-     */
+    /** Lista todas as empresas (apenas para administração global, se necessário). */
+    @Transactional(readOnly = true)
     public List<EmpresaDTO> listar() {
         return empresaRepository.findAll()
                 .stream()
@@ -32,19 +31,17 @@ public class EmpresaService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Retorna os dados da empresa do usuário logado.
-     */
+    /** Retorna os dados da empresa do usuário logado (empresaId do JWT). */
+    @Transactional(readOnly = true)
     public EmpresaDTO buscarMinhaEmpresa() {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
+        Long empresaId = requireEmpresaId();
         Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
         return toDTO(empresa);
     }
 
-    /**
-     * Cria uma nova empresa (usado apenas no cadastro inicial).
-     */
+    /** Cria uma nova empresa (usado apenas no cadastro inicial). */
+    @Transactional
     public EmpresaDTO criar(EmpresaDTO dto) {
         if (empresaRepository.existsByCnpj(dto.getCnpj())) {
             throw new IllegalArgumentException("CNPJ já cadastrado");
@@ -53,25 +50,23 @@ public class EmpresaService {
         return toDTO(empresaRepository.save(empresa));
     }
 
-    /**
-     * Atualiza os dados da empresa do usuário logado.
-     */
+    /** Atualiza os dados da empresa do usuário logado. */
+    @Transactional
     public EmpresaDTO atualizarMinhaEmpresa(EmpresaDTO dto) {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
+        Long empresaId = requireEmpresaId();
         Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
 
-        empresa.setNome(dto.getNome());
-        empresa.setEmail(dto.getEmail());
-        empresa.setTelefone(dto.getTelefone());
-        empresa.setCnpj(dto.getCnpj());
+        if (dto.getNome() != null)     empresa.setNome(dto.getNome());
+        if (dto.getEmail() != null)    empresa.setEmail(dto.getEmail());
+        if (dto.getTelefone() != null) empresa.setTelefone(dto.getTelefone());
+        if (dto.getCnpj() != null)     empresa.setCnpj(dto.getCnpj());
 
         return toDTO(empresaRepository.save(empresa));
     }
 
-    /**
-     * Converte entidade para DTO.
-     */
+    // ================= helpers =================
+
     private EmpresaDTO toDTO(Empresa empresa) {
         return EmpresaDTO.builder()
                 .id(empresa.getId())
@@ -82,9 +77,6 @@ public class EmpresaService {
                 .build();
     }
 
-    /**
-     * Converte DTO para entidade.
-     */
     private Empresa toEntity(EmpresaDTO dto) {
         return Empresa.builder()
                 .id(dto.getId())
@@ -93,5 +85,11 @@ public class EmpresaService {
                 .telefone(dto.getTelefone())
                 .cnpj(dto.getCnpj())
                 .build();
+    }
+
+    private Long requireEmpresaId() {
+        Long empresaId = tenant.getEmpresaId();
+        if (empresaId == null) throw new IllegalStateException("empresaId ausente no token JWT");
+        return empresaId;
     }
 }

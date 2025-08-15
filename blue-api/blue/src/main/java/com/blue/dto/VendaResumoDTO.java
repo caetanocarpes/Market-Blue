@@ -1,11 +1,9 @@
-package com.blue.api.dto;
+package com.blue.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Linha da tabela "Últimas vendas" no dashboard.
- */
+/** Linha da tabela "Últimas vendas" no dashboard. */
 public class VendaResumoDTO {
     private Long id;
     private String cliente;

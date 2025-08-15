@@ -1,12 +1,17 @@
 package com.blue.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
-/**
- * Objeto usado para receber/enviar dados de Categoria.
- */
-public record CategoriaDTO(
-        Long id,
-        @NotBlank(message = "Nome é obrigatório") String nome,
-        String descricao
-) {}
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoriaDTO {
+    private Long id;
+
+    @NotBlank(message = "Nome é obrigatório")
+    @Size(max = 120, message = "Nome deve ter no máximo 120 caracteres")
+    private String nome;
+}

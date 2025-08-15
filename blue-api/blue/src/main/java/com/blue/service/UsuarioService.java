@@ -1,19 +1,20 @@
 package com.blue.service;
 
+import com.blue.domain.Empresa;
 import com.blue.domain.Usuario;
 import com.blue.dto.UsuarioDTO;
-import com.blue.repository.UsuarioRepository;
 import com.blue.repository.EmpresaRepository;
-import com.blue.security.UsuarioAutenticadoUtil;
-import jakarta.persistence.EntityNotFoundException;
+import com.blue.repository.UsuarioRepository;
+import com.blue.security.JwtTenant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Serviço responsável pela lógica de negócios relacionada aos usuários.
+ * Regras de Usuário (Admin) com escopo por empresa (tenant).
  */
 @Service
 @RequiredArgsConstructor
@@ -21,84 +22,100 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
-    private final UsuarioAutenticadoUtil usuarioAutenticadoUtil; // Utilitário para pegar o usuário logado
+    private final JwtTenant tenant;
+    private final PasswordEncoder passwordEncoder;
 
-    /**
-     * Lista todos os usuários vinculados à empresa do usuário logado.
-     * Garante que um admin só veja usuários da própria empresa.
-     */
+    /** Lista usuários do tenant atual. */
+    @Transactional(readOnly = true)
     public List<UsuarioDTO> listarDaMinhaEmpresa() {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
+        Long empresaId = requireEmpresaId();
         return usuarioRepository.findByEmpresaId(empresaId)
                 .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+                .map(this::toDto)
+                .toList();
     }
 
-    /**
-     * Busca um usuário específico da empresa do usuário logado.
-     */
+    /** Busca um usuário do tenant atual por ID. */
+    @Transactional(readOnly = true)
     public UsuarioDTO buscarPorId(Long id) {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
-        Usuario usuario = usuarioRepository.findById(id)
-                .filter(u -> u.getEmpresa().getId().equals(empresaId)) // garante que é da mesma empresa
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado na sua empresa"));
-        return toDTO(usuario);
+        Long empresaId = requireEmpresaId();
+        Usuario u = usuarioRepository.findByIdAndEmpresaId(id, empresaId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado nesta empresa."));
+        return toDto(u);
     }
 
     /**
-     * Cria um novo usuário vinculado à empresa do usuário logado.
+     * Cria um usuário no tenant atual.
+     * OBS: Como o DTO não possui senha, definimos uma senha TEMPORÁRIA "123456"
+     * (criptografada). Depois crie um fluxo de "reset de senha".
      */
+    @Transactional
     public UsuarioDTO criar(UsuarioDTO dto) {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
-        var empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new EntityNotFoundException("Empresa não encontrada"));
+        Long empresaId = requireEmpresaId();
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new IllegalArgumentException("Empresa do token não encontrada"));
 
-        Usuario usuario = toEntity(dto);
-        usuario.setEmpresa(empresa); // vincula à empresa do admin logado
+        usuarioRepository.findByEmail(dto.getEmail()).ifPresent(u -> {
+            throw new IllegalArgumentException("E-mail já cadastrado.");
+        });
 
-        return toDTO(usuarioRepository.save(usuario));
+        Usuario novo = new Usuario();
+        novo.setNome(dto.getNome());
+        novo.setEmail(dto.getEmail());
+        novo.setRole(dto.getRole());
+        novo.setEmpresa(empresa);
+
+        // Senha temporária padrão — sempre criptografada
+        novo.setSenha(passwordEncoder.encode("123456"));
+
+        Usuario salvo = usuarioRepository.save(novo);
+        return toDto(salvo);
     }
 
-    /**
-     * Atualiza os dados de um usuário da mesma empresa.
-     */
+    /** Atualiza um usuário do tenant atual. */
+    @Transactional
     public UsuarioDTO atualizar(Long id, UsuarioDTO dto) {
-        Long empresaId = usuarioAutenticadoUtil.getEmpresaIdUsuario();
-        Usuario usuario = usuarioRepository.findById(id)
-                .filter(u -> u.getEmpresa().getId().equals(empresaId))
-                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado na sua empresa"));
+        Long empresaId = requireEmpresaId();
+        Usuario u = usuarioRepository.findByIdAndEmpresaId(id, empresaId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado nesta empresa."));
 
-        usuario.setNome(dto.getNome());
-        usuario.setEmail(dto.getEmail());
-        usuario.setRole(dto.getRole());
+        if (dto.getEmail() != null && !dto.getEmail().equalsIgnoreCase(u.getEmail())) {
+            usuarioRepository.findByEmail(dto.getEmail()).ifPresent(other -> {
+                throw new IllegalArgumentException("E-mail já cadastrado.");
+            });
+            u.setEmail(dto.getEmail());
+        }
+        if (dto.getNome() != null)  u.setNome(dto.getNome());
+        if (dto.getRole() != null)  u.setRole(dto.getRole());
 
-        return toDTO(usuarioRepository.save(usuario));
+        Usuario salvo = usuarioRepository.save(u);
+        return toDto(salvo);
     }
 
-    /**
-     * Converte entidade para DTO (não expõe senha).
-     */
-    private UsuarioDTO toDTO(Usuario usuario) {
+    /** Remove um usuário do tenant atual. */
+    @Transactional
+    public void deletar(Long id) {
+        Long empresaId = requireEmpresaId();
+        Usuario u = usuarioRepository.findByIdAndEmpresaId(id, empresaId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado nesta empresa."));
+        usuarioRepository.delete(u);
+    }
+
+    // ================= helpers =================
+
+    private Long requireEmpresaId() {
+        Long empresaId = tenant.getEmpresaId();
+        if (empresaId == null) throw new IllegalStateException("empresaId ausente no token JWT");
+        return empresaId;
+    }
+
+    private UsuarioDTO toDto(Usuario u) {
         return UsuarioDTO.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .role(usuario.getRole())
-                .empresaId(usuario.getEmpresa().getId())
-                .build();
-    }
-
-    /**
-     * Converte DTO para entidade.
-     * A senha deve ser tratada em outra camada (criptografia).
-     */
-    private Usuario toEntity(UsuarioDTO dto) {
-        return Usuario.builder()
-                .id(dto.getId())
-                .nome(dto.getNome())
-                .email(dto.getEmail())
-                .role(dto.getRole())
+                .id(u.getId())
+                .nome(u.getNome())
+                .email(u.getEmail())
+                .role(u.getRole())
+                .empresaId(u.getEmpresa() != null ? u.getEmpresa().getId() : null)
                 .build();
     }
 }

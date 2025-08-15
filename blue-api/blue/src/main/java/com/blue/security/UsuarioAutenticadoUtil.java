@@ -16,16 +16,14 @@ public class UsuarioAutenticadoUtil {
      */
     public Usuario getUsuarioAutenticado() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null && authentication.getPrincipal() instanceof Usuario) {
-            return (Usuario) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof Usuario u) {
+            return u;
         }
-
         return null; // Se não houver usuário logado
     }
 
     /**
-     * Retorna o ID da empresa do usuário autenticado.
+     * Retorna o ID da empresa do usuário autenticado (se houver relação).
      */
     public Long getEmpresaIdUsuario() {
         Usuario usuario = getUsuarioAutenticado();

@@ -2,11 +2,8 @@ package com.blue.dto;
 
 import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class CadastroEmpresaAdminDTO {
     // Dados da empresa
     private String nomeEmpresa;

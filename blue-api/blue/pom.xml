@@ -22,6 +22,7 @@
         <java.version>17</java.version>
         <jjwt.version>0.11.5</jjwt.version>
         <flyway.version>10.16.0</flyway.version>
+        <springdoc.version>2.6.0</springdoc.version>
     </properties>
 
     <dependencies>
@@ -56,6 +57,7 @@
             <artifactId>flyway-core</artifactId>
             <version>${flyway.version}</version>
         </dependency>
+
         <!-- Flyway: suporte específico ao PostgreSQL (necessário no Flyway 10+) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -86,6 +88,13 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Swagger / OpenAPI (springdoc) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- Lombok -->

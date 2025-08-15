@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <title>Teste de Autenticação (Blue)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body { font-family: system-ui, Arial, sans-serif; max-width: 720px; margin: 24px auto; }
+        .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        input, button { padding: 10px; margin: 6px 0; width: 100%; }
+        pre { background: #111; color: #0f0; padding: 12px; border-radius: 8px; overflow: auto; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+<h1>Teste de Autenticação (Blue)</h1>
+
+<div class="card">
+    <h2>Login</h2>
+    <div class="row">
+        <div>
+            <label>Email</label>
+            <input id="email" type="email" placeholder="admin@blue.com" value="admin@blue.com">
+        </div>
+        <div>
+            <label>Senha</label>
+            <input id="senha" type="password" placeholder="123456" value="123456">
+        </div>
+    </div>
+    <button id="btnLogin">Fazer Login</button>
+    <p><strong>Token (salvo no localStorage):</strong></p>
+    <pre id="tokenBox">—</pre>
+</div>
+
+<div class="card">
+    <h2>Chamar rota protegida</h2>
+    <label>Endpoint protegido (GET)</label>
+    <!-- Ajuste se quiser outra rota protegida existente -->
+    <input id="endpoint" type="text" value="/api/admin/empresa">
+    <button id="btnCall">Chamar</button>
+    <p><strong>Resposta:</strong></p>
+    <pre id="respBox">—</pre>
+</div>
+
+<script>
+    const tokenBox = document.getElementById('tokenBox');
+    const respBox = document.getElementById('respBox');
+
+    // Se tiver context-path no application.properties (ex.: /blue), preencha aqui:
+    const CONTEXT_PATH = ''; // ex.: '/blue'
+    const BASE_URL = 'http://localhost:8080' + CONTEXT_PATH;
+
+    const show = (pre, data) => {
+      pre.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    };
+
+    // mostra token já salvo (se houver)
+    show(tokenBox, localStorage.getItem('jwt') || '—');
+
+    document.getElementById('btnLogin').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+
+      try {
+        const r = await fetch(`${BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, senha })
+        });
+
+        const text = await r.text();
+        let body; try { body = JSON.parse(text);} catch { body = text; }
+
+        if (!r.ok) {
+          show(tokenBox, `Erro no login: ${r.status} ${r.statusText}\n${body}`);
+          return;
+        }
+
+        const token = body.token;
+        if (!token) {
+          show(tokenBox, 'Login OK, mas não veio "token" na resposta.');
+          return;
+        }
+
+        localStorage.setItem('jwt', token);
+        show(tokenBox, token);
+      } catch (e) {
+        show(tokenBox, `Falha no login: ${e}`);
+      }
+    };
+
+    document.getElementById('btnCall').onclick = async () => {
+      const endpoint = document.getElementById('endpoint').value.trim();
+      const token = localStorage.getItem('jwt');
+
+      try {
+        const r = await fetch(`${BASE_URL}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        const text = await r.text();
+        let body; try { body = JSON.parse(text);} catch { body = text; }
+
+        show(respBox, { status: r.status, statusText: r.statusText, body });
+      } catch (e) {
+        show(respBox, `Falha na chamada: ${e}`);
+      }
+    };
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package com.blue.api.dto;
+package com.blue.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -7,8 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * DTO que o front espera em /api/admin/metrics
- * Campos com nomes diretos pra não precisar mapear no JS.
+ * DTO que o front espera em /api/admin/metrics.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashboardMetricsDTO {
@@ -18,7 +17,7 @@ public class DashboardMetricsDTO {
     private BigDecimal ticketMedio;
 
     private Deltas deltas;              // variações em %
-    private List<PontoSerie> serie;     // opcional: série p/ o “gráfico” fake
+    private List<PontoSerie> serie;     // série temporal (opcional)
 
     public Integer getUsuariosAtivos() { return usuariosAtivos; }
     public void setUsuariosAtivos(Integer usuariosAtivos) { this.usuariosAtivos = usuariosAtivos; }
@@ -38,7 +37,7 @@ public class DashboardMetricsDTO {
     public List<PontoSerie> getSerie() { return serie; }
     public void setSerie(List<PontoSerie> serie) { this.serie = serie; }
 
-    /** Deltas percentuais exibidos em verdinho/vermelho no front */
+    /** Deltas percentuais exibidos no front */
     public static class Deltas {
         private Double usuariosAtivos;
         private Double pedidos24h;
@@ -57,8 +56,8 @@ public class DashboardMetricsDTO {
 
     /** Pontos da série temporal (dia e valor) pro gráfico */
     public static class PontoSerie {
-        private LocalDate t; // data do ponto
-        private BigDecimal v; // valor do ponto
+        private LocalDate t;   // data do ponto
+        private BigDecimal v;  // valor do ponto
 
         public PontoSerie() {}
         public PontoSerie(LocalDate t, BigDecimal v) { this.t = t; this.v = v; }
