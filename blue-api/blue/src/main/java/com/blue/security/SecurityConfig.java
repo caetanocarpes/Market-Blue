@@ -3,7 +3,6 @@ package com.blue.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -26,33 +25,21 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final UserDetailsServiceImpl userDetailsService;
-    private final PasswordEncoder passwordEncoder; // vem do PasswordConfig
+    private final PasswordEncoder passwordEncoder; // <-- vem do PasswordConfig
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // habilita CORS (usa config padrão)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // preflight
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // 🔧 caminho REAL do seu AuthController
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        // docs e estáticos
                         .requestMatchers(
+                                "/api/v1/auth/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/", "/index.html", "/login.html", "/dashboard.html",
                                 "/assets/**", "/static/**", "/css/**", "/js/**", "/images/**",
-                                "/health", "/error"
+                                "/error"
                         ).permitAll()
-
-                        // exemplo: apenas ADMIN em /api/admin/**
-                        // .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // todo o resto precisa de token
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(daoAuthenticationProvider())
@@ -65,7 +52,7 @@ public class SecurityConfig {
     public AuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
+        provider.setPasswordEncoder(passwordEncoder); // <-- usa o bean já existente
         return provider;
     }
 
