@@ -5,7 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +15,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Filtro que intercepta cada requisição, extrai o JWT e autentica no SecurityContext.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
@@ -24,59 +27,37 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain chain
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Pula rotas públicas logo de cara (além de shouldNotFilter se quiser)
-        String uri = request.getRequestURI();
-        if (isPublic(uri)) {
-            chain.doFilter(request, response);
-            return;
-        }
+        final String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
 
-        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-
+            token = authHeader.substring(7);
             try {
-                String username = jwtUtil.getUsernameFromToken(token);
-
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                    // Valida usando o username (evita a ambiguidade de tipos)
-                    if (jwtUtil.validateToken(token, username)) {
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        userDetails.getAuthorities()
-                                );
-                        authentication.setDetails(
-                                new WebAuthenticationDetailsSource().buildDetails(request)
-                        );
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-                }
-            } catch (Exception ex) {
-                // Se quiser, loga aqui. Não bloqueia a requisição; apenas segue sem autenticar.
-                // ex: logger.debug("JWT inválido: {}", ex.getMessage());
+                username = jwtUtil.getUsernameFromToken(token);
+            } catch (Exception ignored) {
+                // token inválido/expirado – segue adiante sem autenticar
             }
         }
 
-        chain.doFilter(request, response);
-    }
+        // Evita reprocessar se já houver autenticação no contexto
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails user = userDetailsService.loadUserByUsername(username);
 
-    private boolean isPublic(String uri) {
-        return uri.startsWith("/api/auth/")
-                || uri.startsWith("/api/publico/")
-                || uri.startsWith("/v3/api-docs")
-                || uri.startsWith("/swagger-ui")
-                || uri.equals("/") || uri.endsWith(".html")
-                || uri.startsWith("/assets/") || uri.startsWith("/static/")
-                || uri.startsWith("/css/") || uri.startsWith("/js/") || uri.startsWith("/images/")
-                || uri.equals("/health") || uri.equals("/error");
+            // validateToken espera (token, UserDetails)
+            if (jwtUtil.validateToken(token, user)) {
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        }
+
+        filterChain.doFilter(request, response);
     }
 }

@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Classe utilitária que extrai informações (claims) do JWT já validado.
- * Expõe: empresaId, userId, clienteId e role do usuário logado.
+ * Lê os claims do JWT (já validados pelo JwtFilter/JwtUtil) e expõe:
+ * empresaId, userId, clienteId e role do usuário logado.
  */
 @Component
 @RequiredArgsConstructor
@@ -15,7 +15,9 @@ public class JwtTenant {
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
 
-    // Extrai o token do cabeçalho Authorization
+    /**
+     * Extrai o token do cabeçalho Authorization usando o esquema Bearer.
+     */
     private String extrairBearer() {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -41,6 +43,7 @@ public class JwtTenant {
 
     public String getRole() {
         String token = extrairBearer();
-        return token == null ? null : jwtUtil.getAllClaimsFromToken(token).get("role", String.class);
+        // Usa o helper público do JwtUtil, evitando acessar métodos privados.
+        return token == null ? null : jwtUtil.getClaimAsString(token, "role");
     }
 }

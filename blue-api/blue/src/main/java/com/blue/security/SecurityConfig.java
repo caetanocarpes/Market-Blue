@@ -19,13 +19,13 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final UserDetailsServiceImpl userDetailsService;
-    private final PasswordEncoder passwordEncoder; // <-- vem do PasswordConfig
+    private final PasswordEncoder passwordEncoder;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,7 +34,9 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/auth/**",                 // sua rota de login
+                                "/api/publico/**",
+                                "/health",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/", "/index.html", "/login.html", "/dashboard.html",
                                 "/assets/**", "/static/**", "/css/**", "/js/**", "/images/**",
@@ -52,7 +54,7 @@ public class SecurityConfig {
     public AuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder); // <-- usa o bean já existente
+        provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
 
