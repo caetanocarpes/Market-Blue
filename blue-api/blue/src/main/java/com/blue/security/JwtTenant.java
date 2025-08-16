@@ -4,6 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Classe utilitária que extrai informações (claims) do JWT já validado.
+ * Expõe: empresaId, userId, clienteId e role do usuário logado.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtTenant {
@@ -11,10 +15,11 @@ public class JwtTenant {
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
 
+    // Extrai o token do cabeçalho Authorization
     private String extrairBearer() {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.substring(7);
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
         }
         return null;
     }
@@ -36,11 +41,6 @@ public class JwtTenant {
 
     public String getRole() {
         String token = extrairBearer();
-        return token == null ? null : jwtUtil.getClaimAsString(token, "role");
-    }
-
-    public String getSubject() {
-        String token = extrairBearer();
-        return token == null ? null : jwtUtil.getUsernameFromToken(token);
+        return token == null ? null : jwtUtil.getAllClaimsFromToken(token).get("role", String.class);
     }
 }

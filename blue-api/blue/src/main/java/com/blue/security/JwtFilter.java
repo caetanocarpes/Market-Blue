@@ -1,71 +1,82 @@
 package com.blue.security;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
-/**
- * Filtro que extrai o JWT do header Authorization, valida e popula o SecurityContext.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+    ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        // Sem "Authorization: Bearer <token>" → segue sem autenticar
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Pula rotas públicas logo de cara (além de shouldNotFilter se quiser)
+        String uri = request.getRequestURI();
+        if (isPublic(uri)) {
             chain.doFilter(request, response);
             return;
         }
 
-        final String token = authHeader.substring(7);
-        String username;
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
 
-        try {
-            username = jwtUtil.getUsernameFromToken(token); // subject
-        } catch (Exception e) {
-            chain.doFilter(request, response); // token inválido
-            return;
-        }
+            try {
+                String username = jwtUtil.getUsernameFromToken(token);
 
-        // Se ainda não há auth no contexto, validar e autenticar
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(token, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
+                    // Valida usando o username (evita a ambiguidade de tipos)
+                    if (jwtUtil.validateToken(token, username)) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
                         );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                }
+            } catch (Exception ex) {
+                // Se quiser, loga aqui. Não bloqueia a requisição; apenas segue sem autenticar.
+                // ex: logger.debug("JWT inválido: {}", ex.getMessage());
             }
         }
 
         chain.doFilter(request, response);
+    }
+
+    private boolean isPublic(String uri) {
+        return uri.startsWith("/api/auth/")
+                || uri.startsWith("/api/publico/")
+                || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui")
+                || uri.equals("/") || uri.endsWith(".html")
+                || uri.startsWith("/assets/") || uri.startsWith("/static/")
+                || uri.startsWith("/css/") || uri.startsWith("/js/") || uri.startsWith("/images/")
+                || uri.equals("/health") || uri.equals("/error");
     }
 }

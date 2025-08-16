@@ -4,7 +4,10 @@ import com.blue.domain.Usuario;
 import com.blue.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,20 +20,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Se o repo tiver ignore-case, prefira: findByEmailIgnoreCase(username)
         Usuario u = usuarioRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-        String role = (u.getRole() == null ? "USER" : u.getRole()).toUpperCase();
-        List<SimpleGrantedAuthority> auths = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+        // Spring Security espera prefixo ROLE_
+        String role = (u.getRole() == null ? "USER" : u.getRole().trim().toUpperCase());
+        var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
         return User.withUsername(u.getEmail())
-                .password(u.getSenha()) // BCrypt armazenado no banco
-                .authorities(auths)
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(false) // ajuste para !u.isAtivo() se tiver flag
+                .password(u.getSenha()) // hash
+                .authorities(authorities)
+                .accountExpired(false).accountLocked(false)
+                .credentialsExpired(false).disabled(false)
                 .build();
     }
 }
