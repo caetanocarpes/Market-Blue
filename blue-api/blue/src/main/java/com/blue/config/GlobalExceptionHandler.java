@@ -1,5 +1,7 @@
 package com.blue.api;
 
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,12 +17,12 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return body(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         for (var e : ex.getBindingResult().getAllErrors()) {
             String field = e instanceof FieldError fe ? fe.getField() : e.getObjectName();
@@ -29,13 +31,27 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_REQUEST, "Erro de validação", errors);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraint(ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(v ->
+                errors.put(String.valueOf(v.getPropertyPath()), v.getMessage())
+        );
+        return body(HttpStatus.BAD_REQUEST, "Erro de validação", errors);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return body(HttpStatus.CONFLICT, "Violação de integridade de dados", null);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<?> handleDenied(AccessDeniedException ex) {
+    public ResponseEntity<Map<String, Object>> handleDenied(AccessDeniedException ex) {
         return body(HttpStatus.FORBIDDEN, "Acesso negado", null);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleGeneric(Exception ex) {
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno", null);
     }
 

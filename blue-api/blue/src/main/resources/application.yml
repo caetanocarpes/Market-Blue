@@ -2,31 +2,22 @@ spring:
   application:
     name: blue-api
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/blue
-    username: blue
-    password: blue123
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
+  # Perfil padrão caso não especifique via env (-Dspring.profiles.active=prod)
   profiles:
-    active: dev
-
-  flyway:
-    enabled: false
+    default: dev
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 security:
   jwt:
-    secret: 8QhlObv+ET15Oi5Jr1NHxiEl6ToJLBb45a0EDuTtIUE=
-    expirationMillis: 86400000
+    # Em produção, injete por variável de ambiente (não commitar segredo!)
+    secret: ${JWT_SECRET:8QhlObv+ET15Oi5Jr1NHxiEl6ToJLBb45a0EDuTtIUE=}
+    expirationMillis: ${JWT_EXPIRATION_MILLIS:86400000}
 
+# Swagger/OpenAPI: ligado por padrão; no prod desligamos abaixo
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
