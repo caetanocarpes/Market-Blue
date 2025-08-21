@@ -1,9 +1,5 @@
 package com.blue.tenant;
 
-/**
- * (Opcional) Contexto de tenant por thread.
- * Não é obrigatório, mas fica disponível caso queira usar em jobs/async.
- */
 public final class TenantContext {
     private TenantContext() {}
 

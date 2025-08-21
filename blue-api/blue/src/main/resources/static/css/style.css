@@ -1,0 +1,80 @@
+:root{
+--brand:#1f4acc; /* Azul principal */
+--brand-700:#1636a0; /* Azul mais escuro */
+--brand-200:#e5edff; /* Fundo claro */
+--shadow: 0 10px 20px rgba(0,0,0,.12), 0 6px 6px rgba(0,0,0,.08);
+}
+
+
+body{
+background: linear-gradient(180deg, var(--brand-200), #f7f9ff 40%, #ffffff 100%);
+min-height: 100vh;
+}
+
+
+.auth-wrap{
+position: relative;
+width: 100%;
+max-width: 420px;
+border-radius: 1.5rem;
+background: #fff;
+box-shadow: var(--shadow);
+overflow: hidden;
+}
+
+
+.slider{ width:200%; display:flex; transition: transform .45s ease; }
+.is-signup .slider{ transform: translateX(-50%); }
+
+
+.panel{ width:50%; padding:1.25rem; }
+
+
+.input{
+border: 1px solid #e5e7eb; /* gray-200 */
+background: #fff;
+border-radius: 0.75rem;
+padding: .9rem 1rem;
+outline: none;
+transition: border-color .2s ease, box-shadow .2s ease;
+}
+.input:focus{ border-color: var(--brand); box-shadow: 0 0 0 4px rgba(31,74,204,.12); }
+
+
+.btn-primary{
+background: var(--brand);
+color: #fff;
+border-radius: 0.75rem;
+padding: .9rem 1rem;
+font-weight: 600;
+box-shadow: 0 8px 16px rgba(31,74,204,.22);
+transition: transform .06s ease, box-shadow .2s ease, background .2s ease;
+}
+.btn-primary:hover{ background: var(--brand-700); box-shadow: 0 10px 18px rgba(22,54,160,.28); }
+.btn-primary:active{ transform: translateY(1px); }
+
+
+.social-btn{
+border: 1px solid #e5e7eb;
+border-radius: 0.75rem;
+padding: 0.7rem;
+transition: all .2s ease;
+background: #fff;
+}
+.social-btn:hover{ box-shadow: 0 6px 14px rgba(0,0,0,.08); transform: translateY(-1px); }
+
+
+.link{ color: var(--brand); font-weight: 600; }
+.link:hover{ text-decoration: underline; }
+
+
+.divider{ display:flex; align-items:center; gap:.75rem; color:#6b7280; font-size:.875rem; margin:1rem 0; }
+.divider::before, .divider::after{ content:""; flex:1; height:1px; background:#e5e7eb; }
+
+
+.eye-btn{ position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); color:#9ca3af; }
+.eye-btn:hover{ color:#374151; }
+
+
+.back-btn{ color:#6b7280; display:inline-flex; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+.back-btn:hover{ color:#111827; }

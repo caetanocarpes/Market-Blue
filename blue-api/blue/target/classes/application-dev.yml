@@ -1,4 +1,8 @@
 spring:
+  config:
+    activate:
+      on-profile: dev
+
   datasource:
     url: jdbc:postgresql://localhost:5432/blue
     username: blue
@@ -7,18 +11,37 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update         # conveniente no dev
+      ddl-auto: update        # dev: prático
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-    open-in-view: true         # ok no dev, cuidado em prod
+    open-in-view: true        # ok no dev
 
   flyway:
-    enabled: false             # liga quando tiver migrations
+    enabled: false            # liga quando tiver migrations
 
-# Se quiser logs mais verbosos no dev:
+  web:
+    resources:
+      cache:
+        period: 0
+      chain:
+        cache: false
+        enabled: true
+        compressed: true
+
 logging:
   level:
+    root: INFO
+    org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.blue: DEBUG
+
+# CORS dev (se usar front em outra origem)
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:8080
+  allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+  allowed-headers: Authorization,Content-Type,Accept
+  allow-credentials: false
+  max-age: 3600

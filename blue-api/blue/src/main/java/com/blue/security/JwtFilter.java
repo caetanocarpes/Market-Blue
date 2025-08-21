@@ -15,9 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Filtro que intercepta cada requisição, extrai o JWT e autentica no SecurityContext.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
@@ -32,24 +29,50 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
-        String token = null;
-        String username = null;
+        final String uri = request.getRequestURI();
+        final String method = request.getMethod();
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-            try {
-                username = jwtUtil.getUsernameFromToken(token);
-            } catch (Exception ignored) {
-                // token inválido/expirado – segue adiante sem autenticar
-            }
+        // --- Fast-path: rotas públicas (mantém em sincronia com SecurityConfig) ---
+        final boolean isPublic =
+                "OPTIONS".equalsIgnoreCase(method) ||
+                        ("GET".equalsIgnoreCase(method) && (
+                                "/".equals(uri) ||
+                                        "/index.html".equals(uri) ||
+                                        "/login.html".equals(uri) ||
+                                        "/cadastro.html".equals(uri) ||
+                                        uri.startsWith("/css/") ||
+                                        uri.startsWith("/js/") ||
+                                        uri.startsWith("/images/") ||
+                                        uri.startsWith("/assets/") ||
+                                        "/favicon.ico".equals(uri)
+                        )) ||
+                        uri.startsWith("/api/auth/") ||
+                        ("POST".equalsIgnoreCase(method) && ("/api/empresas".equals(uri) || "/api/usuarios".equals(uri)));
+
+        if (isPublic) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        // Evita reprocessar se já houver autenticação no contexto
+        // --- JWT apenas quando houver Bearer ---
+        final String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String token = authHeader.substring(7);
+        String username = null;
+        try {
+            username = jwtUtil.getUsernameFromToken(token);
+        } catch (Exception e) {
+            // Token inválido/expirado: segue sem autenticar (Security decidirá -> 401)
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails user = userDetailsService.loadUserByUsername(username);
-
-            // validateToken espera (token, UserDetails)
             if (jwtUtil.validateToken(token, user)) {
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

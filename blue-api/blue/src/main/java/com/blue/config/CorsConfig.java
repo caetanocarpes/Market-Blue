@@ -1,31 +1,39 @@
 package com.blue.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
-import java.util.List;
+import java.util.Arrays;
 
-/**
- * CORS global para permitir Authorization no front.
- * Ajuste allowed origins se quiser restringir domínios.
- */
 @Configuration
 public class CorsConfig {
 
+    @Value("${cors.allowed-origins:*}")
+    private String allowedOrigins;
+    @Value("${cors.allowed-methods:GET,POST,PUT,PATCH,DELETE,OPTIONS}")
+    private String allowedMethods;
+    @Value("${cors.allowed-headers:Authorization,Content-Type,Accept}")
+    private String allowedHeaders;
+    @Value("${cors.allow-credentials:false}")
+    private boolean allowCredentials;
+    @Value("${cors.max-age:3600}")
+    private long maxAge;
+
     @Bean
-    public CorsFilter corsFilter() {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*")); // ex.: List.of("https://meudominio.com")
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","Origin","X-Requested-With"));
-        cfg.setExposedHeaders(List.of("Authorization","Location"));
-        cfg.setAllowCredentials(true);
+        cfg.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        cfg.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+        cfg.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+        cfg.setAllowCredentials(allowCredentials);
+        cfg.setMaxAge(maxAge);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
-        return new CorsFilter(source);
+        return source;
     }
 }

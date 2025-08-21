@@ -1,32 +1,33 @@
 spring:
   application:
     name: blue-api
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/blue
-    username: blue
-    password: blue123
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
   profiles:
-    active: dev
-
-  flyway:
-    enabled: false
-
+    active: dev           # padrão em dev; em prod use SPRING_PROFILES_ACTIVE=prod
+  jackson:
+    time-zone: America/Sao_Paulo
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
 server:
   port: 8080
 
+# JWT (mantendo teu prefixo)
 security:
   jwt:
-    secret: 8QhlObv+ET15Oi5Jr1NHxiEl6ToJLBb45a0EDuTtIUE=
-    expirationMillis: 86400000
+    secret: ${JWT_SECRET:changeme-dev-secret}
+    expirationMillis: ${JWT_EXPIRATION_MILLIS:86400000}  # 24h
 
+# (opcional) SpringDoc/Swagger habilita via perfil se quiser
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

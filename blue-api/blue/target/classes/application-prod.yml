@@ -1,23 +1,36 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
+
   datasource:
-    url: ${DB_URL}             # ex: jdbc:postgresql://db-host:5432/blue
+    url: ${DB_URL}                 # ex: jdbc:postgresql://db:5432/blue
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none           # NUNCA usar update/create em produção
+      ddl-auto: validate           # prod: nunca update/create
     show-sql: false
     properties:
       hibernate:
         format_sql: false
-    open-in-view: false        # evita N+1/exposição de sessão no prod
+    open-in-view: false
 
   flyway:
-    enabled: true              # recomenda-se migrations em prod
+    enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: true  # útil se já houver tabelas pré-existentes
+    baseline-on-migrate: true
+
+  web:
+    resources:
+      cache:
+        period: 31536000           # 1 ano
+      chain:
+        cache: true
+        enabled: true
+        compressed: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -25,14 +38,24 @@ server:
     enabled: true
     min-response-size: 1024
 
-springdoc:
-  api-docs:
-    enabled: false
-  swagger-ui:
-    enabled: false
-
 logging:
   level:
     root: INFO
+    org.springframework.security: INFO
     org.springframework.web: WARN
     org.hibernate: WARN
+    com.blue: INFO
+
+# CORS prod – defina o(s) domínio(s) válidos via env
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://www.seudominio.com}
+  allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+  allowed-headers: Authorization,Content-Type,Accept
+  allow-credentials: false
+  max-age: 3600
+
+# JWT em prod deve vir por env
+security:
+  jwt:
+    secret: ${JWT_SECRET}          # obrigatório em prod
+    expirationMillis: ${JWT_EXPIRATION_MILLIS:86400000}

@@ -7,12 +7,14 @@ import com.blue.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Configuration
+@Profile("dev")
 @RequiredArgsConstructor
 public class AdminSeeder implements CommandLineRunner {
 
@@ -23,18 +25,16 @@ public class AdminSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // Se já existir alguma empresa, usa a primeira.
         Empresa empresa = empresaRepository.findTopByOrderByIdAsc()
                 .orElseGet(() -> {
                     Empresa e = new Empresa();
                     e.setNome("Blue LTDA");
-                    e.setCnpj("00.000.000/0001-00"); // ajuste se tiver @Pattern
-                    e.setTelefone("11999999999");    // <=== preenchido (era o que faltava)
-                    e.setEmail("contato@blue.com");  // preenche também se for @NotBlank
+                    e.setCnpj("00.000.000/0001-00");
+                    e.setTelefone("11999999999");
+                    e.setEmail("contato@blue.com");
                     return empresaRepository.save(e);
                 });
 
-        // Garante o admin
         Optional<Usuario> adminOpt = usuarioRepository.findByEmail("admin@blue.com");
         if (adminOpt.isEmpty()) {
             Usuario admin = new Usuario();
@@ -44,7 +44,7 @@ public class AdminSeeder implements CommandLineRunner {
             admin.setRole("ADMIN");
             admin.setEmpresa(empresa);
             usuarioRepository.save(admin);
-            System.out.println("[SEED] Usuário admin criado: admin@blue.com / admin123");
+            System.out.println("[SEED][DEV] Usuário admin: admin@blue.com / admin123");
         }
     }
 }

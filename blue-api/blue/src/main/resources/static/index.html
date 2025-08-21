@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login / Sign up - Blue Style</title>
+    <!-- Tailwind para utilitários (opcional) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CSS externo -->
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="flex items-center justify-center p-6">
+<div class="w-full max-w-[460px]">
+    <!-- Splash / Marca -->
+    <div class="rounded-3xl bg-[var(--brand)] text-white h-24 mb-5 flex items-center justify-center shadow-md">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold tracking-wide">Blue</span>
+        </div>
+    </div>
+
+    <!-- Cartão de autenticação -->
+    <div id="authCard" class="auth-wrap mx-auto">
+        <div class="slider">
+            <!-- LOGIN -->
+            <section class="panel">
+                <div class="p-6 sm:p-8">
+                    <header class="mb-6">
+                        <p class="text-sm text-gray-500">Bem-vindo de volta</p>
+                        <h1 class="text-2xl font-semibold text-gray-900">Login na sua conta</h1>
+                    </header>
+
+                    <form id="loginForm" class="space-y-4" novalidate>
+                        <div>
+                            <label class="block mb-1 text-sm text-gray-700" for="loginEmail">Email</label>
+                            <input id="loginEmail" name="email" type="email" class="input w-full" placeholder="voce@exemplo.com" required />
+                            <p class="mt-1 hidden text-sm text-red-600" data-error-for="loginEmail"></p>
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-sm text-gray-700" for="loginPassword">Senha</label>
+                            <div class="relative">
+                                <input id="loginPassword" name="password" type="password" class="input w-full pr-10" placeholder="••••••••" minlength="6" required />
+                                <button type="button" data-toggle-password="loginPassword" class="eye-btn" aria-label="Mostrar/ocultar senha">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <p class="mt-1 hidden text-sm text-red-600" data-error-for="loginPassword"></p>
+                        </div>
+
+                        <div class="flex items-center justify-between text-sm">
+                            <label class="inline-flex items-center gap-2 select-none">
+                                <input type="checkbox" class="rounded border-gray-300" />
+                                <span class="text-gray-600">Lembrar de mim</span>
+                            </label>
+                            <a href="#" class="text-[var(--brand)] hover:underline">Esqueci minha senha</a>
+                        </div>
+
+                        <button class="btn-primary w-full" type="submit">Entrar</button>
+
+                        <div class="divider">ou entre com</div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <button type="button" class="social-btn" aria-label="Entrar com Google">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 mx-auto"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,14,24,14c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.197-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.54,5.036C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.094,5.565c0.001-0.001,0.002-0.001,0.003-0.002 l6.197,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                            </button>
+                            <button type="button" class="social-btn" aria-label="Entrar com Facebook">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 mx-auto" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.5 9.9v-7h-2.3V12h2.3V9.7c0-2.3 1.4-3.6 3.5-3.6c1 0 2 .2 2 .2v2.2h-1.1c-1.1 0-1.5.7-1.5 1.4V12h2.6l-.4 2.9h-2.2v7A10 10 0 0 0 22 12"/></svg>
+                            </button>
+                            <button type="button" class="social-btn" aria-label="Entrar com X/Twitter">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2h3.191l-6.97 7.963L22 22h-6.594l-4.86-6.353L4.9 22H1.706l7.458-8.513L2 2h6.75l4.392 5.82L18.244 2Zm-1.156 18.4h1.768L7.01 3.52H5.123l11.965 16.88Z"/></svg>
+                            </button>
+                        </div>
+
+                        <p class="text-center text-sm mt-6 text-gray-600">Não tem conta? <button type="button" id="toSignup" class="link">Cadastre-se</button></p>
+                    </form>
+                </div>
+            </section>
+
+            <!-- SIGNUP -->
+            <section class="panel">
+                <div class="p-6 sm:p-8">
+                    <header class="mb-6">
+                        <button type="button" id="backToLogin" class="back-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            <span>Voltar</span>
+                        </button>
+                        <h1 class="text-2xl font-semibold text-gray-900">Criar sua conta</h1>
+                        <p class="text-sm text-gray-500">Preencha os dados abaixo.</p>
+                    </header>
+
+                    <form id="signupForm" class="space-y-4" novalidate>
+                        <div>
+                            <label class="block mb-1 text-sm text-gray-700" for="signupEmail">Email</label>
+                            <input id="signupEmail" name="email" type="email" class="input w-full" placeholder="voce@exemplo.com" required />
+                            <p class="mt-1 hidden text-sm text-red-600" data-error-for="signupEmail"></p>
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-sm text-gray-700" for="signupPassword">Senha</label>
+                            <div class="relative">
+                                <input id="signupPassword" name="password" type="password" class="input w-full pr-10" placeholder="Mínimo 6 caracteres" minlength="6" required />
+                                <button type="button" data-toggle-password="signupPassword" class="eye-btn" aria-label="Mostrar/ocultar senha">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <p class="mt-1 hidden text-sm text-red-600" data-error-for="signupPassword"></p>
+                        </div>
+                        <div>
+                            <label class="block mb-1 text-sm text-gray-700" for="signupConfirm">Confirmar senha</label>
+                            <input id="signupConfirm" name="confirm" type="password" class="input w-full" placeholder="Repita a senha" minlength="6" required />
+                            <p class="mt-1 hidden text-sm text-red-600" data-error-for="signupConfirm"></p>
+                        </div>
+
+                        <button class="btn-primary w-full" type="submit">Cadastrar</button>
+
+                        <div class="divider">ou cadastre-se com</div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button type="button" class="social-btn" aria-label="Cadastrar com Google">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="w-5 h-5 mx-auto"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.108,18.961,14,24,14c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.197l-6.197-5.238C29.211,35.091,26.715,36,24,36 c-5.202,0-9.619-3.317-11.283-7.946l-6.54,5.036C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.094,5.565c0.001-0.001,0.002-0.001,0.003-0.002 l6.197,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+                            </button>
+                            <button type="button" class="social-btn" aria-label="Cadastrar com Facebook">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5 mx-auto" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.5 9.9v-7h-2.3V12h2.3V9.7c0-2.3 1.4-3.6 3.5-3.6c1 0 2 .2 2 .2v2.2h-1.1c-1.1 0-1.5.7-1.5 1.4V12h2.6l-.4 2.9h-2.2v7A10 10 0 0 0 22 12"/></svg>
+                            </button>
+                            <button type="button" class="social-btn" aria-label="Cadastrar com X/Twitter">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mx-auto" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2h3.191l-6.97 7.963L22 22h-6.594l-4.86-6.353L4.9 22H1.706l7.458-8.513L2 2h6.75l4.392 5.82L18.244 2Zm-1.156 18.4h1.768L7.01 3.52H5.123l11.965 16.88Z"/></svg>
+                            </button>
+                        </div>
+
+                        <p class="text-center text-sm mt-6 text-gray-600">Já tem conta? <button type="button" id="toLogin" class="link">Entrar</button></p>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <p class="text-center text-xs text-gray-400 mt-4">UI de demonstração. Conecte ao seu backend.</p>
+</div>
+
+<!-- JS externo -->
+<script src="js/app.js"></script>
+</body>
+</html>

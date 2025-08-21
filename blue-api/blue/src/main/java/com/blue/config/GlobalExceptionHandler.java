@@ -2,19 +2,30 @@ package com.blue.api;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.validation.FieldError;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String,Object>> handleRse(ResponseStatusException ex){
+        return body(ex.getStatusCode(), ex.getReason(), null);
+    }
+
+    @ExceptionHandler({ BadCredentialsException.class, UsernameNotFoundException.class })
+    public ResponseEntity<Map<String,Object>> handleAuth(Exception ex){
+        return body(HttpStatus.UNAUTHORIZED, "Credenciais inválidas", null);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
@@ -63,5 +74,9 @@ public class GlobalExceptionHandler {
         m.put("message", msg);
         if (details != null) m.put("details", details);
         return ResponseEntity.status(status).body(m);
+    }
+
+    private ResponseEntity<Map<String, Object>> body(HttpStatusCode status, String msg, Object details) {
+        return body(HttpStatus.valueOf(status.value()), msg, details);
     }
 }
